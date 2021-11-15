@@ -1,0 +1,94 @@
+---
+title: "Independent Project Data Analysis"
+author: "Your Name Here"
+date: "11/16/2021"
+output: html_document
+---
+
+## Getting Setup
+
+Before getting started, it is a good practice to start with a clean slate by restarting your R session
+
+Go to the top menu, select Session then select Restart R
+
+Keep all of your analysis in this same .Rmd file and keep all the associated files in the project folder. Make sure the project name is showing in the upper right of the RStudio window.
+
+# Load packages
+
+```{r setup, include=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggbeeswarm)
+
+```
+
+# Import Data
+
+Make sure your data is in "tidy" format 
+
+Here is is a link with some information about what tidy data is:
+[TIDY DATA FOR EFFICIENCY, REPRODUCIBILITY, AND COLLABORATION](https://www.openscapes.org/blog/2020/10/12/tidy-data/)
+
+I recommend using a csv file to store your dataset and then using readr to import it. One easy way to share data with a collaborator but still import into R is to use Google Sheets and then "publish to the web" as a csv (I will demo this in class)
+
+
+Paste the URL into the blank below then run the code chuck to import
+
+```{r import data}
+
+
+my.data <- read_csv("___")
+
+```
+
+# Data Wrangling
+
+Find the code you need to prepare or "wrangle" your data to make any calculations needed and combine any datasets you need to combine by looking in the "data_wrangling" folder within the "script_templates" folder. Copy and paste the code you need in the chunk below.
+
+
+```{r data wrangling}
+
+
+
+```
+
+
+
+# Data Description
+
+Find the code you need to describe your data by looking in the "descriptive_stats" folder within the "script_templates" folder. Copy and paste the code you need in the chunk below.
+
+```{r descriptive stats}
+
+
+
+
+```
+
+
+
+# Data Visualization
+
+Find the code you need to visualize (=graph) your data by looking in the "graphing" folder within the "script_templates" folder. Copy and paste the code you need in the chunk below.
+
+```{r graphs}
+
+
+
+
+```
+
+To save your graph with the `ggsave()` function, you need to name the resulting file with surrounding " ", and indicate the size via height, width, and units. Don't forget to save the graph with a dpi call between 300-500 to make it nice and crisp! Look at the `ggsave()` help file for more information and options.
+
+the way the code below is setup, it will save the last graph you made
+replace the blank with a name to give your graph file
+
+```{r Save your graph, eval = F}
+
+# save the graph!
+ggsave(filename="___.png",  #recommended to use.png or .jpg file types
+       height = 7, width = 8, units = "in", 
+       dpi = 300)
+
+```
