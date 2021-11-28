@@ -1,0 +1,171 @@
+---
+title: "Independent Project Analysis"
+author: "Your Name Here"
+date: "11/16/2021"
+output: html_document
+---
+
+## Getting Setup
+
+Before getting started, it is a good practice to start with a clean slate by restarting your R session
+
+Go to the top menu, select Session then select Restart R
+
+Keep all of your analysis in this same .Rmd file and keep all the associated files in the project folder. Make sure the project name is showing in the upper right of the RStudio window.
+
+# Load packages
+
+```{r setup, include=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggbeeswarm)
+
+```
+
+# Import Data
+
+Make sure your data is in "tidy" format 
+
+Here is is a link with some information about what tidy data is:
+[TIDY DATA FOR EFFICIENCY, REPRODUCIBILITY, AND COLLABORATION](https://www.openscapes.org/blog/2020/10/12/tidy-data/)
+
+I recommend using a csv file to store your dataset and then using readr to import it. One easy way to share data with a collaborator but still import into R is to use Google Sheets and then "publish to the web" as a csv (I will demo this in class)
+
+
+Paste the URL into the blank below then run the code chuck to import
+
+```{r import data}
+
+
+my.data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRB3bfjaTJeAhP-i-v6vNBhzz-wAh8EtvWeBVuP2PjRU1aay6hRuYKRtuuy0lK2LTKFMGewzhAHHVS2/pub?output=csv")
+
+```
+
+# Data Wrangling
+
+Find the code you need to prepare or "wrangle" your data to make any calculations needed and combine any datasets you need to combine by looking in the "data_wrangling" folder within the "script_templates" folder. Copy and paste the code you need in the chunk below.
+
+
+```{r data wrangling}
+
+
+my.data.long <- my.data %>% 
+  
+  #remove when no animals were present 
+  #replace blank with column name for total animals present
+  filter(total_penguins != 0) %>%   
+  
+  #change from wide to long format to make one column for type of behavior
+  #here we start with splitting by whether they self preened or social preened
+  pivot_longer(cols = c("preen_self", "preen_social"),
+               names_to = "who",
+               names_prefix = "preen_",
+               values_to = "number_obs") 
+
+#filter for just the ones that self preened and then pivot_longer 
+#to split by whether the preening happened in the water or on the land
+self <- my.data.long %>% 
+  filter(who == "self") %>% 
+  select(-preen_social_land, -preen_social_water, -number_obs) %>% 
+  pivot_longer(cols = c("preen_self_land", "preen_self_water"),
+               names_to = "location",
+               names_prefix = "preen_self_",
+               values_to = "number_obs") 
+
+#filter for just the ones that social preened and then pivot_longer 
+#to split by whether the preening happened in the water or on the land
+social <- my.data.long %>% 
+  filter(who == "social") %>% 
+  select(-preen_self_land, -preen_self_water, -number_obs) %>% 
+  pivot_longer(cols = c("preen_social_land", "preen_social_water"),
+               names_to = "location",
+               names_prefix = "preen_social_",
+               values_to = "number_obs") 
+
+#join the self and social preening data together
+my.data.long2 <- bind_rows(self, social)
+
+#summarize the data for each observational time period
+summary.data <- my.data.long2 %>% 
+  
+  #calculate the percentage of animals observed doing a particular behavior
+  #replace the blank with the column with the total animals present
+  mutate(percent_obs = number_obs/total_penguins*100) %>% 
+  
+  
+  #calculate the average percentage of animals observed doing a particular 
+  #behavior for each observational time period
+  #include the name of the column with a unique identifier for each observational time period in the group_by() function
+  #make sure to also group by any factors that you want to compare later
+  group_by(obs_period, date, time, who, location) %>% 
+  summarize(ave_percent_obs = mean(percent_obs))
+
+```
+
+
+
+# Data Description
+
+Find the code you need to describe your data by looking in the "descriptive_stats" folder within the "script_templates" folder. Copy and paste the code you need in the chunk below.
+
+```{r descriptive stats}
+
+desc.stat <- summary.data %>% # put the name of the data frame here
+  filter(!is.na(ave_percent_obs)) %>% # remove missing values from the variable of interest
+  group_by(time, who, location) %>% # put the name of the grouping variables here
+  summarize(mean = mean(ave_percent_obs), # put the name of the variable you want to summarize in this & following blanks
+            median = median(ave_percent_obs), 
+            SD = sd(ave_percent_obs), 
+            IQR = IQR(ave_percent_obs), 
+            min = min(ave_percent_obs),
+            max = max(ave_percent_obs),
+            sample_size = n())
+
+desc.stat
+
+
+```
+
+
+
+# Data Visualization
+
+Find the code you need to visualize (=graph) your data by looking in the "graphing" folder within the "script_templates" folder. Copy and paste the code you need in the chunk below.
+
+```{r graphs}
+
+ggplot(
+  data = summary.data, 
+  aes(x = who, y = ave_percent_obs, fill=location, color=location)) + 
+  geom_quasirandom(
+    shape=21, size=2, alpha = 0.5, width = 0.2, #play with these values as needed
+    dodge.width = 0.5) + #adjust the dodge width as needed
+  stat_summary(fun = mean, 
+               fun.min = function(x) mean(x) - sd(x), 
+               fun.max = function(x) mean(x) + sd(x), 
+               na.rm = TRUE, 
+               size = 1, #play with this value as needed
+               position=position_dodge(width=0.5),
+               show.legend = FALSE) + #match this width to dodge.width above
+  facet_grid(cols = vars(time)) +
+  ylab("Percentage Observed") +
+  xlab("Type of Preening") +
+  coord_cartesian(expand=TRUE) +
+  theme_classic(base_size=12) 
+
+
+
+
+```
+
+To save your graph with the `ggsave()` function, you need to name the resulting file with surrounding " ", and indicate the size via height, width, and units. Don't forget to save the graph with a dpi call between 300-500 to make it nice and crisp! Look at the `ggsave()` help file for more information and options.
+
+```{r Save your graph, eval = F}
+
+# save the graph!
+ggsave(filename="graph1.png",  #recommended to use.png or .jpg file types
+       height = 7, width = 8, units = "in", 
+       dpi = 300)
+
+```
