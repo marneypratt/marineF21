@@ -53,7 +53,6 @@ Find the code you need to prepare or "wrangle" your data to make any calculation
 my.data.long <- my.data %>% 
   
   #remove when no animals were present 
-  #replace blank with column name for total animals present
   filter(total_penguins != 0) %>%   
   
   #change from wide to long format to make one column for type of behavior
